@@ -47,8 +47,7 @@ runs:
   steps:
     - uses: actions/checkout@v3
 
-    - name: Get Short commit SHA
-      if: ${{ inputs.TAG == '' }}
+    - name: Get Short commit SHA if don't send a TAG
       shell: bash
       run: |
         if [ '${{ inputs.TAG }}' == '' ]; then
