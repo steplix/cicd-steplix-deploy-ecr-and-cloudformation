@@ -18,15 +18,6 @@ with:
     ENVIRONMENT: testing
 ```
 
-### `COMMIT_MESSAGE` (**required**)
-
-Message from the head commit.
-
-``` yaml
-with:
-    COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
-```
-
 ### `AWS_ECR_REPOSITORY` (**required**)
 
 AWS ECR Repository name.

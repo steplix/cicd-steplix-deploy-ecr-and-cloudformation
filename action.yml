@@ -6,15 +6,10 @@ inputs:
     type: string
     description: "Name of the environment to deploy"
     required: true
-  COMMIT_MESSAGE:
-    type: string
-    description: "Pass the head commit message {{ github.event.head_commit.message }}"
-    required: true
   AWS_ECR_REPOSITORY:
     type: string
     description: "AWS ECR Repository name"
     required: true
-  
   AWS_ACCESS_KEY_ID:
     type: string
     description: "AWS Access key id"
@@ -50,7 +45,6 @@ inputs:
 
 env:
   ENVIRONMENT: ${{ inputs.ENVIRONMENT }}
-  COMMIT_MESSAGE: '${{ inputs.COMMIT_MESSAGE }}'
   DISABLE_CACHE: '${{ inputs.DISABLE_CACHE }}'
   AWS_ECR_REPOSITORY: '${{ inputs.AWS_ECR_REPOSITORY }}'
   AWS_CF_STACK_NAME: '${{ inputs.AWS_CF_STACK_NAME }}'
