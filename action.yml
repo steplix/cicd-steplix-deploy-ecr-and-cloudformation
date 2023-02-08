@@ -6,10 +6,6 @@ inputs:
     type: string
     description: "Name of the environment to deploy"
     required: true
-  TAG:
-    type: string
-    description: "Tag that will be placed on the docker image to upload in ECR"
-    required: true
   COMMIT_MESSAGE:
     type: string
     description: "Pass the head commit message {{ github.event.head_commit.message }}"
@@ -20,6 +16,10 @@ inputs:
     required: true
   
   # NOT required inputs
+  TAG:
+    type: string
+    description: Tag that will be placed on the docker image to upload in ECR. The default value is the Short commit SHA.
+    required: false
   AWS_CF_STACK_NAME:
     type: string
     default: '${{ github.event.repository.name }}'
@@ -50,6 +50,10 @@ runs:
   steps:
     - uses: actions/checkout@v3
 
+    - name: Get Short commit SHA
+      if: ${{ env.TAG == '' }}
+      run: echo "TAG=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
     - uses: aws-actions/configure-aws-credentials@v1-node16
       id: aws
       with:
@@ -58,52 +62,48 @@ runs:
         aws-region:             ${{ env.AWS_REGION }}
     
     - name: Form ECR Docker URL
-      id: ECR
-      run: echo URL=${{ steps.aws.outputs.aws-account-id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.AWS_ECR_REPOSITORY }} >> $GITHUB_OUTPUT
+      run: echo ECR_URL=${{ steps.aws.outputs.aws-account-id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.AWS_ECR_REPOSITORY }} >> $GITHUB_ENV
 
     - name: Log-in to ECR
-      run: aws ecr get-login-password --region "${{ env.AWS_REGION }}" | docker login --username AWS --password-stdin ${{ steps.ECR.outputs.URL }}
+      run: aws ecr get-login-password --region "${{ env.AWS_REGION }}" | docker login --username AWS --password-stdin ${{ env.ECR_URL }}
 
     - name: Verify if Docker already exist with tag ${{ env.TAG }}
-      id: EXITS_IMAGE
       run: |
         IMAGE=$(aws ecr list-images --repository-name ${{ env.AWS_ECR_REPOSITORY }} --query "imageIds[?imageTag=='${{ env.TAG }}'].imageDigest" --output text)
-        echo VALUE=$(if [[ ! -z "${IMAGE}" ]]; then echo true; else echo false; fi) >> $GITHUB_OUTPUT
+        echo EXITS_IMAGE=$(if [[ ! -z "${IMAGE}" ]]; then echo true; else echo false; fi) >> $GITHUB_ENV
 
     - name: Modify package.json based on bumped tag
-      if: steps.EXITS_IMAGE.outputs.VALUE != 'true'
+      if: env.EXITS_IMAGE != 'true'
       run: |
         echo sed -i 's/\"version\":\s*\"[0-9]+\.[0-9]+\.[0-9]+\",\"version\": \"${{ env.TAG }}\"/g' package.json
 
     - name: Get latest image commit sha
-      if: steps.EXITS_IMAGE.outputs.VALUE != 'true' && env.DISABLE_CACHE != 'true'
-      id: LATEST
+      if: env.EXITS_IMAGE != 'true' && env.DISABLE_CACHE != 'true'
       run: |
         latest_sha=$(aws ecr describe-images --repository-name ${{ env.AWS_ECR_REPOSITORY }} --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]' --output text)
-        echo TAG=$latest_sha >> $GITHUB_OUTPUT
+        echo LATEST_TAG=$latest_sha >> $GITHUB_ENV
 
     - name: Docker build and push with cache inlined
-      if: steps.EXITS_IMAGE.outputs.VALUE != 'true' && env.DISABLE_CACHE != 'true' && steps.LATEST.outputs.TAG != 'None'
+      if: env.EXITS_IMAGE != 'true' && env.DISABLE_CACHE != 'true' && env.LATEST_TAG != 'None'
       run: >
         docker buildx build
-        --push -t ${{ steps.ECR.outputs.URL }}:${{ env.TAG }}
+        --push -t ${{ env.ECR_URL }}:${{ env.TAG }}
         --cache-to=type=inline
-        --cache-from=type=registry,ref=${{ steps.ECR.outputs.URL }}:${{ steps.LATEST.outputs.TAG }}
+        --cache-from=type=registry,ref=${{ env.ECR_URL }}:${{ env.LATEST_TAG }}
         .
 
     - name: Docker build and push no cache
-      if: steps.EXITS_IMAGE.outputs.VALUE != 'true' && (env.DISABLE_CACHE == 'true' || steps.LATEST.outputs.TAG == 'None')
+      if: env.EXITS_IMAGE != 'true' && (env.DISABLE_CACHE == 'true' || env.LATEST_TAG == 'None')
       run: >-
         docker buildx build
-        --push -t ${{ steps.ECR.outputs.URL }}:${{ env.TAG }}
+        --push -t ${{ env.ECR_URL }}:${{ env.TAG }}
         --cache-to=type=inline
         .
 
     - name: Prefix parameter overrides Cloud Formation
-      id: PREFIX_OVERRIDE
       run: |
         HAVE_PARAMS=${{ contains(env.AWS_CLOUDFORMATION_PARAMS_OVERRIDE, '=') }}
-        echo "VALUE=$(if [ $HAVE_PARAMS == 'true' ]; then echo ','; else echo ''; fi)" >> $GITHUB_OUTPUT
+        echo "VALUE=$(if [ $HAVE_PARAMS == 'true' ]; then echo ','; else echo ''; fi)" >> $GITHUB_ENV
 
     - name: Capitalize environment
       id: CAPITALIZED_ENV
@@ -114,7 +114,6 @@ runs:
     - name: Deploy to AWS CloudFormation
       uses: aws-actions/aws-cloudformation-github-deploy@v1
       env:
-        PREFIX_OVERRIDE: ${{ steps.PREFIX_OVERRIDE.outputs.VALUE }}
         ENV_CAPITALIZED: ${{ steps.CAPITALIZED_ENV.outputs.capitalized }}
       with:
         name: ${{ env.AWS_CF_STACK_NAME }}-${{ env.ENVIRONMENT }}

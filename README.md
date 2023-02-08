@@ -17,15 +17,6 @@ with:
     ENVIRONMENT: testing
 ```
 
-### `TAG` (**required**)
-
-Tag that will be placed on the docker image to upload in ECR.
-
-``` yaml
-with:
-    TAG: '1.0.0'
-```
-
 ### `COMMIT_MESSAGE` (**required**)
 
 Message from the head commit.
@@ -88,6 +79,15 @@ with:
 > &emsp;2. `ParameterSuffix`: The environment but capitalized.\
 > &emsp;3. `EnvAwsECRImage`: The docker image upload to AWS ECR.
 
+### `TAG`
+
+Tag that will be placed on the docker image to upload in ECR. The default value is the Short commit SHA.
+
+``` yaml
+with:
+    TAG: '1.0.0'
+```
+
 ### `AWS_CF_STACK_NAME`
 
 AWS cloud-formation stack name. The default value is the repository name.
@@ -126,7 +126,6 @@ jobs:
         uses: steplix/cicd-steplix-deploy-ecr-and-cloudformation@v1
         with:
             ENVIRONMENT: testing
-            TAG: '1.0.0'
             COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
             AWS_ECR_REPOSITORY: 'test-repository-name'
             AWS_ACCESS_KEY_ID: AKIA*****BUT
