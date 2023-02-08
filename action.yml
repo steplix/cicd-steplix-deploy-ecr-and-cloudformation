@@ -50,6 +50,7 @@ runs:
 
     - name: Get Short commit SHA
       if: ${{ inputs.TAG == '' }}
+      shell: bash
       run: |
         if [ ${{ inputs.TAG }} == '' ]; then
           echo "TAG=$(git rev-parse --short HEAD)" >> $GITHUB_ENV;
@@ -65,29 +66,35 @@ runs:
         aws-region:             ${{ inputs.AWS_REGION }}
     
     - name: Form ECR Docker URL
+      shell: bash
       run: echo ECR_URL=${{ steps.AWS.outputs.aws-account-id }}.dkr.ecr.${{ inputs.AWS_REGION }}.amazonaws.com/${{ inputs.AWS_ECR_REPOSITORY }} >> $GITHUB_ENV
 
     - name: Log-in to ECR
+      shell: bash
       run: aws ecr get-login-password --region "${{ inputs.AWS_REGION }}" | docker login --username AWS --password-stdin ${{ env.ECR_URL }}
 
     - name: Verify if Docker already exist with tag ${{ env.TAG }}
+      shell: bash
       run: |
         IMAGE=$(aws ecr list-images --repository-name ${{ inputs.AWS_ECR_REPOSITORY }} --query "imageIds[?imageTag=='${{ env.TAG }}'].imageDigest" --output text)
         echo EXITS_IMAGE=$(if [[ ! -z "${IMAGE}" ]]; then echo true; else echo false; fi) >> $GITHUB_ENV
 
     - name: Modify package.json based on bumped tag
       if: env.EXITS_IMAGE != 'true'
+      shell: bash
       run: |
         echo sed -i 's/\"version\":\s*\"[0-9]+\.[0-9]+\.[0-9]+\",\"version\": \"${{ env.TAG }}\"/g' package.json
 
     - name: Get latest image commit sha
       if: env.EXITS_IMAGE != 'true' && inputs.DISABLE_CACHE != 'true'
+      shell: bash
       run: |
         latest_sha=$(aws ecr describe-images --repository-name ${{ inputs.AWS_ECR_REPOSITORY }} --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]' --output text)
         echo LATEST_TAG=$latest_sha >> $GITHUB_ENV
 
     - name: Docker build and push with cache inlined
       if: env.EXITS_IMAGE != 'true' && inputs.DISABLE_CACHE != 'true' && env.LATEST_TAG != 'None'
+      shell: bash
       run: >
         docker buildx build
         --push -t ${{ env.ECR_URL }}:${{ env.TAG }}
@@ -97,6 +104,7 @@ runs:
 
     - name: Docker build and push no cache
       if: env.EXITS_IMAGE != 'true' && (inputs.DISABLE_CACHE == 'true' || env.LATEST_TAG == 'None')
+      shell: bash
       run: >-
         docker buildx build
         --push -t ${{ env.ECR_URL }}:${{ env.TAG }}
@@ -104,6 +112,7 @@ runs:
         .
 
     - name: Prefix parameter overrides Cloud Formation
+      shell: bash
       run: |
         HAVE_PARAMS=${{ contains(inputs.AWS_CLOUDFORMATION_PARAMS_OVERRIDE, '=') }}
         echo "VALUE=$(if [ $HAVE_PARAMS == 'true' ]; then echo ','; else echo ''; fi)" >> $GITHUB_ENV
