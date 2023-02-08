@@ -52,7 +52,7 @@ runs:
       if: ${{ inputs.TAG == '' }}
       shell: bash
       run: |
-        if [ ${{ inputs.TAG }} == '' ]; then
+        if [ '${{ inputs.TAG }}' == '' ]; then
           echo "TAG=$(git rev-parse --short HEAD)" >> $GITHUB_ENV;
         else
           echo "TAG=${{ inputs.TAG }}" >> $GITHUB_ENV;
