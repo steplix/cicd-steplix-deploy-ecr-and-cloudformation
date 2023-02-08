@@ -15,7 +15,24 @@ inputs:
     description: "AWS ECR Repository name"
     required: true
   
+  AWS_ACCESS_KEY_ID:
+    type: string
+    description: "AWS Access key id"
+    required: true
+  AWS_SECRET_ACCESS_KEY:
+    type: string
+    description: "AWS Secret access key"
+    required: true
+  AWS_REGION:
+    type: string
+    description: "AWS Region"
+    required: true
+  
   # NOT required inputs
+  AWS_CLOUDFORMATION_PARAMS_OVERRIDE:
+    type: string
+    description: "Cloudformation parameters to override when deploy the application"
+    required: false
   TAG:
     type: string
     description: Tag that will be placed on the docker image to upload in ECR. The default value is the Short commit SHA.

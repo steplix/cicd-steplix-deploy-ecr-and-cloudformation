@@ -5,6 +5,7 @@ Deploy an application in AWS that uses docker and cloud formation.
 ## Pre-requisites
 
 Create an [AWS ECR Repository](https://docs.aws.amazon.com/AmazonECR/latest/userguide/repository-create.html).
+Create an [AWS Access credentials](https://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html).
 
 ## Inputs
 
