@@ -114,7 +114,7 @@ runs:
       shell: bash
       run: |
         HAVE_PARAMS=${{ contains(inputs.AWS_CLOUDFORMATION_PARAMS_OVERRIDE, '=') }}
-        echo "VALUE=$(if [ $HAVE_PARAMS == 'true' ]; then echo ','; else echo ''; fi)" >> $GITHUB_ENV
+        echo "PREFIX_OVERRIDE=$(if [ $HAVE_PARAMS == 'true' ]; then echo ','; else echo ''; fi)" >> $GITHUB_ENV
 
     - name: Capitalize environment
       id: CAPITALIZED_ENV
