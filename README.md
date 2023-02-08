@@ -18,6 +18,17 @@ with:
     ENVIRONMENT: testing
 ```
 
+### `AWS_CF_STACK_NAME` (**required**)
+
+AWS cloud-formation stack name.
+
+``` yaml
+with:
+    AWS_CF_STACK_NAME: ${{ github.event.repository.name }}
+```
+
+> INFO: Recommend send the repository name.
+
 ### `AWS_ECR_REPOSITORY` (**required**)
 
 AWS ECR Repository name.
@@ -80,17 +91,6 @@ with:
     TAG: '1.0.0'
 ```
 
-### `AWS_CF_STACK_NAME`
-
-AWS cloud-formation stack name. The default value is the repository name.
-
-`Default value`: ${{ github.event.repository.name }}
-
-``` yaml
-with:
-    AWS_CF_STACK_NAME: 'my-stack-name'
-```
-
 ### `DISABLE_CACHE`
 
 Disable docker cache. By default is enabled.
@@ -119,7 +119,7 @@ jobs:
         with:
             ENVIRONMENT: testing
             COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
-            AWS_ECR_REPOSITORY: 'test-repository-name'
+            AWS_ECR_REPOSITORY: ${{ github.event.repository.name }}
             AWS_ACCESS_KEY_ID: AKIA*****BUT
             AWS_SECRET_ACCESS_KEY: yWFX**********aC2sCc
             AWS_REGION: us-east-2

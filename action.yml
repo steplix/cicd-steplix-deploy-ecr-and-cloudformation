@@ -6,6 +6,10 @@ inputs:
     type: string
     description: "Name of the environment to deploy"
     required: true
+  AWS_CF_STACK_NAME:
+    type: string
+    description: "AWS cloud-formation stack name"
+    required: true
   AWS_ECR_REPOSITORY:
     type: string
     description: "AWS ECR Repository name"
@@ -31,11 +35,6 @@ inputs:
   TAG:
     type: string
     description: Tag that will be placed on the docker image to upload in ECR. The default value is the Short commit SHA.
-    required: false
-  AWS_CF_STACK_NAME:
-    type: string
-    default: '${{ github.event.repository.name }}'
-    description: "AWS cloud-formation stack name"
     required: false
   DISABLE_CACHE:
     type: boolean
@@ -131,7 +130,7 @@ runs:
         name: ${{ inputs.AWS_CF_STACK_NAME }}-${{ inputs.ENVIRONMENT }}
         template: ./cloudformation/cloudformation.yml
         parameter-overrides: >-
-          Environment=${{ inputs.ENVIRONMENT }}
-          ParameterSuffix=${{ env.ENV_CAPITALIZED }}
-          EnvAwsECRImage=${{ inputs.AWS_ECR_REPOSITORY }}:${{ env.VERSION }}
+          Environment=${{ inputs.ENVIRONMENT }},
+          ParameterSuffix=${{ env.ENV_CAPITALIZED }},
+          EnvAwsECRImage=${{ inputs.AWS_ECR_REPOSITORY }}:${{ env.TAG }},
           ${{ env.PREFIX_OVERRIDE }} ${{ inputs.AWS_CLOUDFORMATION_PARAMS_OVERRIDE }}
