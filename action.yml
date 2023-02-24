@@ -28,6 +28,9 @@ inputs:
     required: true
   
   # NOT required inputs
+  CAPABILITIES:
+    description: "The comma-delimited list of stack template capabilities to acknowledge. Defaults to 'CAPABILITY_IAM'"
+    required: false
   AWS_CLOUDFORMATION_PARAMS_OVERRIDE:
     type: string
     description: "Cloudformation parameters to override when deploy the application"
@@ -128,6 +131,7 @@ runs:
       with:
         name: ${{ inputs.AWS_CF_STACK_NAME }}-${{ inputs.ENVIRONMENT }}
         template: ./cloudformation/cloudformation.yml
+        capabilities: ${{ inputs.CAPABILITIES }}
         parameter-overrides: >-
           Environment=${{ inputs.ENVIRONMENT }},
           ParameterSuffix=${{ env.ENV_CAPITALIZED }},

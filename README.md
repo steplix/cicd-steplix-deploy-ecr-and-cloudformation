@@ -65,6 +65,15 @@ with:
     AWS_REGION: us-east-2
 ```
 
+### `CAPABILITIES`
+
+The comma-delimited list of stack template capabilities to acknowledge. Defaults to 'CAPABILITY_IAM'.
+
+``` yaml
+with:
+    CAPABILITIES: CAPABILITY_IAM,CAPABILITY_NAMED_IAM
+```
+
 ### `AWS_CLOUDFORMATION_PARAMS_OVERRIDE`
 
 Cloudformation parameters to override when deploy the application.
