@@ -31,6 +31,7 @@ inputs:
   CAPABILITIES:
     description: "The comma-delimited list of stack template capabilities to acknowledge. Defaults to 'CAPABILITY_IAM'"
     required: false
+    default: "CAPABILITY_IAM"
   AWS_CLOUDFORMATION_PARAMS_OVERRIDE:
     type: string
     description: "Cloudformation parameters to override when deploy the application"
