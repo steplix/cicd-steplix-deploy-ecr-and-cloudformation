@@ -78,7 +78,7 @@ runs:
     - name: Verify if Docker already exist with tag ${{ env.TAG }}
       shell: bash
       run: |
-        IMAGE=$(aws ecr list-images --repository-name ${{ inputs.AWS_ECR_REPOSITORY }} --query "imageIds[?imageTag=='${{ env.TAG }}'].imageDigest" --output text)
+        IMAGE=$(aws ecr list-images --region ${{ inputs.AWS_REGION }} --repository-name ${{ inputs.AWS_ECR_REPOSITORY }} --query "imageIds[?imageTag=='${{ env.TAG }}'].imageDigest" --output text)
         echo EXITS_IMAGE=$(if [[ ! -z "${IMAGE}" ]]; then echo true; else echo false; fi) >> $GITHUB_ENV
 
     - name: Modify package.json based on bumped tag
@@ -91,7 +91,7 @@ runs:
       if: env.EXITS_IMAGE != 'true' && inputs.DISABLE_CACHE != 'true'
       shell: bash
       run: |
-        latest_sha=$(aws ecr describe-images --repository-name ${{ inputs.AWS_ECR_REPOSITORY }} --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]' --output text)
+        latest_sha=$(aws ecr describe-images --repository-name ${{ inputs.AWS_ECR_REPOSITORY }} --region ${{ inputs.AWS_REGION }} --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]' --output text)
         echo LATEST_TAG=$latest_sha >> $GITHUB_ENV
 
     - name: Docker build and push with cache inlined
