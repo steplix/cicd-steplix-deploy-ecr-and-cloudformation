@@ -45,6 +45,11 @@ inputs:
     default: false
     description: Disable docker cache
     required: false
+  CONCAT_ENV_CF_STACK_NAME:
+    type: boolean
+    default: true
+    description: Concatenate the environment in the cloudformation stack name at the end
+    required: false
 
 runs:
   using: composite
@@ -125,12 +130,21 @@ runs:
       with:
           string: ${{ inputs.ENVIRONMENT }}
 
+    - name: Build cloudformation stack name
+      shell: bash
+      env:
+        ENVIRONMENT: ${{ inputs.ENVIRONMENT }}
+        STACK_NAME: ${{ inputs.AWS_CF_STACK_NAME }}
+        CONCAT_ENV: ${{ inputs.CONCAT_ENV_CF_STACK_NAME }}
+      run: >-
+        echo "CF_STACK_NAME=$(if [ $CONCAT_ENV == true ]; then echo ${STACK_NAME}-${ENVIRONMENT}; else echo ${STACK_NAME}; fi)" >> $GITHUB_ENV
+
     - name: Deploy to AWS CloudFormation
       uses: aws-actions/aws-cloudformation-github-deploy@v1
       env:
         ENV_CAPITALIZED: ${{ steps.CAPITALIZED_ENV.outputs.capitalized }}
       with:
-        name: ${{ inputs.AWS_CF_STACK_NAME }}-${{ inputs.ENVIRONMENT }}
+        name: ${{ env.CF_STACK_NAME }}
         template: ./cloudformation/cloudformation.yml
         capabilities: ${{ inputs.CAPABILITIES }}
         parameter-overrides: >-

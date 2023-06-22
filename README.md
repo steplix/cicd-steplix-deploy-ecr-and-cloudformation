@@ -111,6 +111,17 @@ with:
     DISABLE_CACHE: false
 ```
 
+### `CONCAT_ENV_CF_STACK_NAME`
+
+Concatenate the environment in the cloudformation stack name at the end. By default is true.
+
+`Default value`: true
+
+``` yaml
+with:
+    CONCAT_ENV_CF_STACK_NAME: true
+```
+
 ## Example Usage
 
 ``` yaml
