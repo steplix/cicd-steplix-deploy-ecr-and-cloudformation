@@ -50,6 +50,11 @@ inputs:
     default: true
     description: Concatenate the environment in the cloudformation stack name at the end
     required: false
+  REPLACE_VERSION_IN_PACKAGE_JSON:
+    type: boolean
+    default: true
+    description: If is true replace version in package json with the tag sended or the Short commit SHA.
+    required: false
 
 runs:
   using: composite
@@ -87,7 +92,7 @@ runs:
         echo EXITS_IMAGE=$(if [[ ! -z "${IMAGE}" ]]; then echo true; else echo false; fi) >> $GITHUB_ENV
 
     - name: Modify package.json based on bumped tag
-      if: env.EXITS_IMAGE != 'true'
+      if: env.EXITS_IMAGE != 'true' && inputs.REPLACE_VERSION_IN_PACKAGE_JSON == 'true'
       shell: bash
       run: |
         sed -i 's/"version": "[0-9]*\.[0-9]*\.[0-9]*"/"version": "${{ env.TAG }}"/g' package.json

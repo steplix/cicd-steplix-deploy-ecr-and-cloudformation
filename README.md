@@ -113,13 +113,24 @@ with:
 
 ### `CONCAT_ENV_CF_STACK_NAME`
 
-Concatenate the environment in the cloudformation stack name at the end. By default is true.
+Concatenate the environment in the cloudformation stack name at the end. By default is `true`.
 
 `Default value`: true
 
 ``` yaml
 with:
     CONCAT_ENV_CF_STACK_NAME: true
+```
+
+### `REPLACE_VERSION_IN_PACKAGE_JSON`
+
+If is `true` replace version in package json with the tag sended or the Short commit SHA. By default is `true`.
+
+`Default value`: true
+
+``` yaml
+with:
+    REPLACE_VERSION_IN_PACKAGE_JSON: true
 ```
 
 ## Example Usage
