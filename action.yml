@@ -145,6 +145,7 @@ runs:
         echo "CF_STACK_NAME=$(if [ $CONCAT_ENV == true ]; then echo ${STACK_NAME}-${ENVIRONMENT}; else echo ${STACK_NAME}; fi)" >> $GITHUB_ENV
 
     - name: Deploy to AWS CloudFormation
+      timeout-minutes: 15
       uses: aws-actions/aws-cloudformation-github-deploy@v1
       env:
         ENV_CAPITALIZED: ${{ steps.CAPITALIZED_ENV.outputs.capitalized }}
