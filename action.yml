@@ -191,6 +191,6 @@ runs:
     - name: Backup repository inside steplix backups
       if: env.EXITS_IMAGE != 'true' && inputs.AWS_ACCESS_KEY_ID_BACKUP != '' && inputs.AWS_SECRET_ACCESS_KEY_BACKUP != '' && inputs.AWS_REGION_BACKUP != '' && inputs.AWS_BUCKET_BACKUP_STEPLIX != '' && inputs.STEPLIX_BACKUP_PATH != ''
       shell: bash
-      run: >-
+      run: |
         tar --exclude='/tmp' -czf /tmp/backup.tar.gz .
         aws s3 cp /tmp/backup.tar.gz s3://${{ inputs.AWS_BUCKET_BACKUP_STEPLIX }}/${{ inputs.STEPLIX_BACKUP_PATH }}/${{ env.TAG }}.tar.gz
