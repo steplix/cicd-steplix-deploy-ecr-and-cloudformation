@@ -26,7 +26,29 @@ inputs:
     type: string
     description: "AWS Region"
     required: true
-  
+
+  # Backups
+  AWS_ACCESS_KEY_ID_BACKUP:
+    type: string
+    description: "Backup access key id"
+    required: false
+  AWS_SECRET_ACCESS_KEY_BACKUP:
+    type: string
+    description: "Backup secret access key"
+    required: false
+  AWS_REGION_BACKUP:
+    type: string
+    description: "Backup region"
+    required: false  
+  AWS_BUCKET_BACKUP_STEPLIX:
+    type: string
+    description: "Backup bucket name"
+    required: false
+  STEPLIX_BACKUP_PATH:
+    type: string
+    description: "Backup path"
+    required: false
+
   # NOT required inputs
   CAPABILITIES:
     description: "The comma-delimited list of stack template capabilities to acknowledge. Defaults to 'CAPABILITY_IAM'"
@@ -157,3 +179,18 @@ runs:
           ParameterSuffix=${{ env.ENV_CAPITALIZED }},
           EnvAwsECRImage=${{ inputs.AWS_ECR_REPOSITORY }}:${{ env.TAG }}
           ${{ env.PREFIX_OVERRIDE }} ${{ inputs.AWS_CLOUDFORMATION_PARAMS_OVERRIDE }}
+
+    - uses: aws-actions/configure-aws-credentials@v1-node16
+      if: env.EXITS_IMAGE != 'true' && inputs.AWS_ACCESS_KEY_ID_BACKUP != '' && inputs.AWS_SECRET_ACCESS_KEY_BACKUP != '' && inputs.AWS_REGION_BACKUP != '' && inputs.AWS_BUCKET_BACKUP_STEPLIX != '' && inputs.STEPLIX_BACKUP_PATH != ''
+      id: AWS_BACKUP
+      with:
+        aws-access-key-id:      ${{ inputs.AWS_ACCESS_KEY_ID_BACKUP }}
+        aws-secret-access-key:  ${{ inputs.AWS_SECRET_ACCESS_KEY_BACKUP }}
+        aws-region:             ${{ inputs.AWS_REGION_BACKUP }}
+    
+    - name: Backup repository inside steplix backups
+      if: env.EXITS_IMAGE != 'true' && inputs.AWS_ACCESS_KEY_ID_BACKUP != '' && inputs.AWS_SECRET_ACCESS_KEY_BACKUP != '' && inputs.AWS_REGION_BACKUP != '' && inputs.AWS_BUCKET_BACKUP_STEPLIX != '' && inputs.STEPLIX_BACKUP_PATH != ''
+      shell: bash
+      run: >-
+        tar --exclude='/tmp' -czf /tmp/backup.tar.gz .
+        aws s3 cp /tmp/backup.tar.gz s3://${{ inputs.AWS_BUCKET_BACKUP_STEPLIX }}/${{ inputs.STEPLIX_BACKUP_PATH }}/${{ env.TAG }}.tar.gz
