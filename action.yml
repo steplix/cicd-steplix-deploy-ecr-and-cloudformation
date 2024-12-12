@@ -27,6 +27,11 @@ inputs:
     description: "AWS Region"
     required: true
 
+  AWS_BUCKET_CLOUDFORMATION:
+    type: string
+    description: "Bucket name to store cloudformation.yml files"
+    required: false
+
   # Backups
   AWS_ACCESS_KEY_ID_BACKUP:
     type: string
@@ -39,7 +44,7 @@ inputs:
   AWS_REGION_BACKUP:
     type: string
     description: "Backup region"
-    required: false  
+    required: false
   AWS_BUCKET_BACKUP_STEPLIX:
     type: string
     description: "Backup bucket name"
@@ -95,10 +100,10 @@ runs:
     - uses: aws-actions/configure-aws-credentials@v1-node16
       id: AWS
       with:
-        aws-access-key-id:      ${{ inputs.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key:  ${{ inputs.AWS_SECRET_ACCESS_KEY }}
-        aws-region:             ${{ inputs.AWS_REGION }}
-    
+        aws-access-key-id: ${{ inputs.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ inputs.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ inputs.AWS_REGION }}
+
     - name: Form ECR Docker URL
       shell: bash
       run: echo ECR_URL=${{ steps.AWS.outputs.aws-account-id }}.dkr.ecr.${{ inputs.AWS_REGION }}.amazonaws.com/${{ inputs.AWS_ECR_REPOSITORY }} >> $GITHUB_ENV
@@ -122,7 +127,7 @@ runs:
     - name: Get latest image commit sha
       if: env.EXITS_IMAGE != 'true' && inputs.DISABLE_CACHE != 'true'
       shell: bash
-      run: |  
+      run: |
         latest_sha=$(aws ecr describe-images --no-paginate --repository-name ${{ inputs.AWS_ECR_REPOSITORY }} --region ${{ inputs.AWS_REGION }} --query 'reverse(sort_by(imageDetails,& imagePushedAt))[:1].imageTags[0]' --output text)
         echo LATEST_TAG=$latest_sha >> $GITHUB_ENV
 
@@ -155,7 +160,7 @@ runs:
       id: CAPITALIZED_ENV
       uses: ASzc/change-string-case-action@v5
       with:
-          string: ${{ inputs.ENVIRONMENT }}
+        string: ${{ inputs.ENVIRONMENT }}
 
     - name: Build cloudformation stack name
       shell: bash
@@ -166,13 +171,26 @@ runs:
       run: >-
         echo "CF_STACK_NAME=$(if [ $CONCAT_ENV == true ]; then echo ${STACK_NAME}-${ENVIRONMENT}; else echo ${STACK_NAME}; fi)" >> $GITHUB_ENV
 
+    - name: Upload CloudFormation template to S3 (if AWS_BUCKET_CLOUDFORMATION is defined)
+      if: ${{ inputs.AWS_BUCKET_CLOUDFORMATION != '' }}
+      run: |
+        TIMESTAMP=$(date +%Y%m%d%H%M%S)
+        DEST_PATH="s3://${{ inputs.AWS_BUCKET_CLOUDFORMATION }}/${{ env.CF_STACK_NAME }}/cloudformation-${TIMESTAMP}.yml"
+        echo "Uploading CloudFormation template to $DEST_PATH"
+        aws s3 cp ./cloudformation/cloudformation.yml $DEST_PATH
+        echo "CF_TEMPLATE_PATH=$DEST_PATH" >> $GITHUB_ENV
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_REGION: ${{ inputs.AWS_REGION }}
+
     - name: Deploy to AWS CloudFormation
       uses: aws-actions/aws-cloudformation-github-deploy@v1
       env:
         ENV_CAPITALIZED: ${{ steps.CAPITALIZED_ENV.outputs.capitalized }}
       with:
         name: ${{ env.CF_STACK_NAME }}
-        template: ./cloudformation/cloudformation.yml
+        template: ${{ inputs.AWS_BUCKET_CLOUDFORMATION != '' && env.CF_TEMPLATE_PATH || './cloudformation/cloudformation.yml' }}
         no-fail-on-empty-changeset: "1"
         capabilities: ${{ inputs.CAPABILITIES }}
         parameter-overrides: >-
@@ -185,10 +203,10 @@ runs:
       if: env.EXITS_IMAGE != 'true' && inputs.AWS_ACCESS_KEY_ID_BACKUP != '' && inputs.AWS_SECRET_ACCESS_KEY_BACKUP != '' && inputs.AWS_REGION_BACKUP != '' && inputs.AWS_BUCKET_BACKUP_STEPLIX != '' && inputs.STEPLIX_BACKUP_PATH != ''
       id: AWS_BACKUP
       with:
-        aws-access-key-id:      ${{ inputs.AWS_ACCESS_KEY_ID_BACKUP }}
-        aws-secret-access-key:  ${{ inputs.AWS_SECRET_ACCESS_KEY_BACKUP }}
-        aws-region:             ${{ inputs.AWS_REGION_BACKUP }}
-    
+        aws-access-key-id: ${{ inputs.AWS_ACCESS_KEY_ID_BACKUP }}
+        aws-secret-access-key: ${{ inputs.AWS_SECRET_ACCESS_KEY_BACKUP }}
+        aws-region: ${{ inputs.AWS_REGION_BACKUP }}
+
     - name: Backup repository inside steplix backups
       if: env.EXITS_IMAGE != 'true' && inputs.AWS_ACCESS_KEY_ID_BACKUP != '' && inputs.AWS_SECRET_ACCESS_KEY_BACKUP != '' && inputs.AWS_REGION_BACKUP != '' && inputs.AWS_BUCKET_BACKUP_STEPLIX != '' && inputs.STEPLIX_BACKUP_PATH != ''
       shell: bash
