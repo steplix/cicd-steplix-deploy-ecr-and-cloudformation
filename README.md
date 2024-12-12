@@ -65,6 +65,15 @@ with:
     AWS_REGION: us-east-2
 ```
 
+### `AWS_BUCKET_CLOUDFORMATION` (**optional**)
+
+Bucket name to store cloudformation.yml files
+
+``` yaml
+with:
+    AWS_BUCKET_CLOUDFORMATION: 'test-bucket-cf'
+```
+
 ### `CAPABILITIES`
 
 The comma-delimited list of stack template capabilities to acknowledge. Defaults to 'CAPABILITY_IAM'.
