@@ -173,6 +173,7 @@ runs:
 
     - name: Upload CloudFormation template to S3 (if AWS_BUCKET_CLOUDFORMATION is defined)
       if: ${{ inputs.AWS_BUCKET_CLOUDFORMATION != '' }}
+      shell: bash
       run: |
         TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
         DEST_PATH="s3://${{ inputs.AWS_BUCKET_CLOUDFORMATION }}/${{ env.CF_STACK_NAME }}/${TIMESTAMP}-cloudformation.yml"
