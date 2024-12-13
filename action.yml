@@ -174,8 +174,8 @@ runs:
     - name: Upload CloudFormation template to S3 (if AWS_BUCKET_CLOUDFORMATION is defined)
       if: ${{ inputs.AWS_BUCKET_CLOUDFORMATION != '' }}
       run: |
-        TIMESTAMP=$(date +%Y%m%d%H%M%S)
-        DEST_PATH="s3://${{ inputs.AWS_BUCKET_CLOUDFORMATION }}/${{ env.CF_STACK_NAME }}/cloudformation-${TIMESTAMP}.yml"
+        TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+        DEST_PATH="s3://${{ inputs.AWS_BUCKET_CLOUDFORMATION }}/${{ env.CF_STACK_NAME }}/${TIMESTAMP}-cloudformation.yml"
         echo "Uploading CloudFormation template to $DEST_PATH"
         aws s3 cp ./cloudformation/cloudformation.yml $DEST_PATH
         echo "CF_TEMPLATE_PATH=$DEST_PATH" >> $GITHUB_ENV
