@@ -175,11 +175,14 @@ runs:
       if: ${{ inputs.AWS_BUCKET_CLOUDFORMATION != '' }}
       shell: bash
       run: |
-        TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-        DEST_PATH="s3://${{ inputs.AWS_BUCKET_CLOUDFORMATION }}/${{ env.CF_STACK_NAME }}/${TIMESTAMP}-cloudformation.yml"
+        TIMESTAMP=$(date -u +"%Y-%m-%dT%H%M%SZ")
+        FILE_PATH="${{ env.CF_STACK_NAME }}/${TIMESTAMP}-cloudformation.yml"
+        DEST_PATH="s3://${{ inputs.AWS_BUCKET_CLOUDFORMATION }}/$FILE_PATH"
+        CF_TEMPLATE_URL="https://${{ inputs.AWS_BUCKET_CLOUDFORMATION }}.s3.${{ inputs.AWS_REGION }}.amazonaws.com/$FILE_PATH"
+
         echo "Uploading CloudFormation template to $DEST_PATH"
         aws s3 cp ./cloudformation/cloudformation.yml $DEST_PATH
-        echo "CF_TEMPLATE_PATH=$DEST_PATH" >> $GITHUB_ENV
+        echo "CF_TEMPLATE_URL=$CF_TEMPLATE_URL" >> $GITHUB_ENV
       env:
         AWS_ACCESS_KEY_ID: ${{ inputs.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ inputs.AWS_SECRET_ACCESS_KEY }}
@@ -191,7 +194,7 @@ runs:
         ENV_CAPITALIZED: ${{ steps.CAPITALIZED_ENV.outputs.capitalized }}
       with:
         name: ${{ env.CF_STACK_NAME }}
-        template: ${{ inputs.AWS_BUCKET_CLOUDFORMATION != '' && env.CF_TEMPLATE_PATH || './cloudformation/cloudformation.yml' }}
+        template: ${{ env.CF_TEMPLATE_URL || './cloudformation/cloudformation.yml' }}
         no-fail-on-empty-changeset: "1"
         capabilities: ${{ inputs.CAPABILITIES }}
         parameter-overrides: >-
